@@ -1,171 +1,274 @@
-# AI Incident Triage System
+# AI Incident Triage System  
+**An end-to-end asynchronous AI-powered incident triage platform**
 
-An end-to-end, asynchronous incident triage platform that uses a local LLM for optional enrichment. This repository demonstrates production-style backend patterns — not a chatbot or a thin API wrapper. It shows how AI can fit as one stage in a robust system rather than being a single point of failure.
+This is a production-style system that accepts incident reports, stores them safely, processes them asynchronously, enriches them with a **local LLM (Phi-3 via Ollama)**, and surfaces results in a clean web interface.
 
-## Overview
+It is deliberately designed using the same architectural patterns used in real backend systems:
 
-The system accepts incident reports, validates and persists them, enqueues background work, processes jobs with workers, optionally enriches incidents using a local LLM (Phi-3 via Ollama), and surfaces results to a frontend. Each component has a single responsibility and the system is designed to remain functional even when the AI runtime is unavailable.
+- Control plane vs worker plane  
+- Background job queues  
+- Persistent storage as source of truth  
+- Fault-tolerant processing  
+- Optional AI enrichment, not hard dependency  
 
-Key architectural principles:
-- Separation of control plane and worker plane
-- Background job processing
-- Persistent storage as source of truth
-- Fault-tolerant processing and graceful degradation
-- Minimal, intentional authentication for internal tooling
+This is not a chatbot.  
+This is infrastructure that happens to use AI.
 
-## What this project demonstrates
+---
 
-- Full-stack system design
-- Asynchronous job processing with Redis + BullMQ
-- PostgreSQL as the canonical data store
-- Worker service architecture
-- Local LLM inference (no cloud dependency)
-- Graceful handling when AI is unavailable
-- Simple API-key-based authentication
-- Frontend polling and live updates
+## Why I Built This
 
-## High-level architecture
+Most “AI projects” are thin wrappers around an API.
+
+I wanted to build something closer to how real internal tools are structured:
+
+- Requests come in  
+- They are validated  
+- Persisted  
+- Queued  
+- Processed by workers  
+- Enriched  
+- And only then surfaced to users  
+
+The AI is just one stage in a larger system.
+
+---
+
+## What This Project Demonstrates
+
+- Full-stack system design  
+- Async job processing with Redis + BullMQ  
+- PostgreSQL as a real source of truth  
+- Worker service architecture  
+- Local LLM inference (no cloud dependency)  
+- Graceful handling when AI is unavailable  
+- Simple authentication  
+- Frontend polling + live updates  
+
+In short: real backend patterns, not demos.
+
+---
+
+## High-Level Architecture
 
 Browser (React)
-  ↓
+|
+v
 Backend API (Express)
-  ├─ PostgreSQL (source of truth)
-  └─ Redis Queue → Worker Service → Ollama (Phi-3 Mini)
+|
++--> PostgreSQL
+|
++--> Redis Queue
+|
+v
+Worker Service
+|
+v
+Ollama (Phi-3 Mini)
 
-Control plane:
-- Frontend
-- Backend API
 
-Data / worker plane:
-- PostgreSQL
-- Redis + BullMQ
-- Worker
-- Ollama
+---
 
-## Tech stack
+## Tech Stack
 
-- Frontend: React + Vite  
-- Backend API: Node.js + Express  
-- Worker: Node.js  
-- Queue: Redis + BullMQ  
-- Database: PostgreSQL  
-- Model: Phi-3 Mini  
-- LLM runtime: Ollama  
-- Auth: API key  
-- Infra: Docker / docker-compose
+| Layer        | Tech |
+|-------------|------|
+| Frontend    | React + Vite |
+| Backend API | Node.js + Express |
+| Worker      | Node.js |
+| Queue       | Redis + BullMQ |
+| Database    | PostgreSQL |
+| AI Model    | Phi-3 Mini |
+| LLM Runtime | Ollama |
+| Auth        | API Key |
+| Infra       | Docker |
 
-## Core flow
+---
 
-1. User submits an incident.
-2. Backend validates and stores the incident in PostgreSQL.
-3. Backend enqueues a processing job in Redis.
-4. Worker picks up the job, optionally calls Ollama for triage/enrichment.
-5. Worker updates the database with results or failure state.
-6. Frontend polls the API and displays status updates.
+## How The System Works
 
-Failure modes:
-- If the worker dies, incidents remain stored.
-- If Ollama is down, incidents persist and are marked appropriately; the system does not block on AI.
+User submits incident
+→ Backend validates
+→ Backend stores in DB
+→ Backend enqueues job
+→ Worker picks job
+→ Worker calls Ollama
+→ Worker updates DB
+→ Frontend polls and shows result
 
-Statuses (stored in DB): submitted → processing → triaged → failed
+
+---
+
+## Incident Lifecycle
+
+- submitted  
+- processing  
+- triaged  
+- failed  
+
+---
 
 ## Authentication
 
-All requests require the header:
-- `X-API-KEY: secret123`
+X-API-KEY: secret123
 
-This is a minimal, intentional mechanism suitable for internal tooling and demos.
 
-## Folder structure
+---
+
+## Folder Structure
 
 ai-incident-system/
 ├── backend/
-│   └── src/
-│       ├── index.js
-│       ├── db.js
-│       ├── queue.js
-│       └── auth.js
+│ └── src/
+│ ├── index.js
+│ ├── db.js
+│ ├── queue.js
+│ └── auth.js
+│
 ├── worker/
-│   └── src/
-│       ├── index.js
-│       └── db.js
+│ └── src/
+│ ├── index.js
+│ └── db.js
+│
 ├── frontend/
-│   └── src/
-│       ├── App.jsx
-│       └── main.jsx
+│ └── src/
+│ ├── App.jsx
+│ └── main.jsx
+│
 └── docker-compose.yml
 
-Backend, worker, and frontend are implemented as separate services to reflect real service boundaries.
 
-## Running the system
+---
 
-1. Start infrastructure:
-   docker compose up -d
-   (This starts PostgreSQL and Redis.)
+## Running The System
 
-2. Install dependencies:
-   - Backend:
-     cd backend
-     npm install
-   - Worker:
-     cd worker
-     npm install
-   - Frontend:
-     cd frontend
-     npm install
+### Start infrastructure
 
-3. Run services (each in its own terminal):
-   - Backend:
-     npm run dev
-   - Worker:
-     npm run dev
-   - Frontend:
-     npm run dev
+docker compose up -d
 
-4. Open the frontend:
-   http://localhost:5173
 
-## Ollama (local LLM) setup
+---
 
-Install Ollama:
+### Install dependencies
+
+Backend
+
+cd backend
+npm install
+
+
+Worker
+
+cd worker
+npm install
+
+
+Frontend
+
+cd frontend
+npm install
+
+
+---
+
+### Run services
+
+Backend
+
+npm run dev
+
+
+Worker
+
+npm run dev
+
+
+Frontend
+
+npm run dev
+
+
+Open:
+
+http://localhost:5173
+
+
+---
+
+## Ollama Setup
+
+Install
+
 curl -fsSL https://ollama.com/install.sh | sh
 
-Pull the model:
+
+Pull model
+
 ollama pull phi3:mini
 
-Start the server:
+
+Run server
+
 ollama serve
 
-Quick test:
+
+Test
+
 ollama run phi3:mini "hello"
 
-The system treats Ollama as an enhancement: if Ollama is unavailable, the rest of the system continues to function.
 
-## Example: submit a test incident
+---
 
-curl -X POST http://localhost:4000/incidents \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: secret123" \
-  -d '{"title":"Disk Full","description":"Production disk at 100%"}'
+## Submit Test Incident
 
-Watch the UI or poll the API for status updates.
+curl -X POST http://localhost:4000/incidents
+-H "Content-Type: application/json"
+-H "x-api-key: secret123"
+-d '{"title":"Disk Full","description":"Production disk at 100%"}'
 
-## Design philosophy
 
-- The AI enriches the incident lifecycle but is not required for core functionality.
-- Single source of truth (PostgreSQL) and durable job processing (Redis + BullMQ).
-- Fail soft: components should degrade gracefully rather than causing system-wide failures.
-- Keep services small and focused; prefer reliability and clarity over cleverness.
+---
 
-## Possible extensions
+## Fault Tolerance
 
-- Structured JSON output from the model (schema-driven)
-- Automated severity and category classification
-- Replace polling with WebSockets or server-sent events
-- Role-based authentication and authorization
-- Metrics, observability, and health dashboards
-- Hot-swappable model backends
+If Ollama is down:
 
-## Final notes
+- Incidents still stored  
+- Worker marks status = failed  
+- System continues running  
 
-This project is intentionally pragmatic: it demonstrates realistic system patterns used in internal tooling where reliability, observability, and clear separation of responsibilities matter more than novelty.
+AI is an optional enrichment layer.
+
+---
+
+## Engineering Principles
+
+- Separation of concerns  
+- Single source of truth  
+- Async processing  
+- Fail soft  
+- Minimal coupling  
+- Boring but correct  
+
+---
+
+## Future Extensions
+
+- Structured JSON output  
+- Severity classification  
+- Category tagging  
+- WebSockets  
+- Metrics dashboard  
+- Hot-swappable models  
+
+---
+
+## Final Thoughts
+
+This project mirrors how real internal tooling is built.
+
+Not a toy.  
+Not a demo.  
+A real system.
+
+Built deliberately.
