@@ -150,20 +150,21 @@ docker compose up -d
 ---
 
 ### Install dependencies
+(run commands in their folder eg. cd backend , npm install)
 
-Backend
+# Backend
 
 cd backend
 npm install
 
 
-Worker
+# Worker
 
 cd worker
 npm install
 
 
-Frontend
+# Frontend
 
 cd frontend
 npm install
@@ -172,18 +173,19 @@ npm install
 ---
 
 ### Run services
+(run commands in their folder eg. cd backend , npm install)
 
-Backend
-
-npm run dev
-
-
-Worker
+# Backend
 
 npm run dev
 
 
-Frontend
+# Worker
+
+npm run dev
+
+
+# Frontend
 
 npm run dev
 
