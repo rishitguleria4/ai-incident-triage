@@ -1,105 +1,151 @@
-# 🧠 AI Incident Triage System
+AI Incident Triage System
 
-A production‑style, end‑to‑end **asynchronous AI‑powered incident triage platform** built from scratch.
+An end-to-end asynchronous AI-powered incident triage platform
 
-This system accepts incident reports, stores them safely, queues them for background processing, enriches them using a **local LLM (Phi‑3 via Ollama)**, and displays the results in a clean web UI.
+This is a production-style system that accepts incident reports, stores them safely, processes them asynchronously, enriches them with a local LLM (Phi-3 via Ollama), and surfaces results in a clean web interface.
 
-It is intentionally designed using real backend architecture patterns used in industry:
+It is deliberately designed using the same architectural patterns used in real backend systems:
 
-* Control plane vs Worker plane
-* Asynchronous queues
-* Fault‑tolerant processing
-* Background AI enrichment
-* Local model inference
+Control plane vs worker plane
 
----
+Background job queues
 
-## 🚀 What This Project Demonstrates
+Persistent storage as source of truth
 
-* Full‑stack system design
-* Async job processing with Redis + BullMQ
-* PostgreSQL as source of truth
-* Background worker architecture
-* Local LLM integration (Ollama + Phi‑3 Mini)
-* Graceful degradation when AI is unavailable
-* Simple API‑key authentication
-* Frontend polling + real‑time updates
+Fault-tolerant processing
 
-This is **not** a chatbot.
-This is an **AI‑backed infrastructure service**.
+Optional AI enrichment, not hard dependency
 
----
+This is not a chatbot.
+This is infrastructure that happens to use AI.
 
-## 🧩 Architecture Overview
+Why I Built This
 
-```
+Most “AI projects” are thin wrappers around an API.
+
+I wanted to build something closer to how real internal tools are structured:
+
+Requests come in
+
+They are validated
+
+Persisted
+
+Queued
+
+Processed by workers
+
+Enriched
+
+And only then surfaced to users
+
+The AI is just one stage in a larger system.
+
+What This Project Demonstrates
+
+Full-stack system design
+
+Async job processing with Redis + BullMQ
+
+PostgreSQL as a real source of truth
+
+Worker service architecture
+
+Local LLM inference (no cloud dependency)
+
+Graceful handling when AI is unavailable
+
+Simple authentication
+
+Frontend polling + live updates
+
+In short: real backend patterns, not demos.
+
+High-Level Architecture
 Browser (React)
    |
    v
 Backend API (Express)
    |
-   +--> PostgreSQL  (persistent storage)
+   +--> PostgreSQL
    |
-   +--> Redis Queue (BullMQ)
+   +--> Redis Queue
              |
              v
          Worker Service
              |
              v
-       Ollama (Phi‑3 Mini)
-```
+       Ollama (Phi-3 Mini)
 
-### Control Plane
+Control Plane
 
-* Frontend
-* Backend API
+Frontend
 
-### Data Plane
+Backend API
 
-* Redis
-* Worker
-* PostgreSQL
-* Ollama
+Data / Worker Plane
 
----
+Redis
 
-## 📦 Tech Stack
+Worker
 
-| Layer             | Technology        |
-| ----------------- | ----------------- |
-| Frontend          | React + Vite      |
-| Backend API       | Node.js + Express |
-| Worker            | Node.js + BullMQ  |
-| Queue             | Redis             |
-| Database          | PostgreSQL        |
-| AI Model          | Phi‑3 Mini        |
-| LLM Runtime       | Ollama            |
-| Auth              | API Key Header    |
-| Container Runtime | Docker            |
+PostgreSQL
 
----
+Ollama
 
-## ✨ Features
+Each part has a single responsibility.
 
-* Submit incident reports
-* Input validation
-* API‑key authentication
-* Incident status lifecycle
+Tech Stack
+Layer	Tech
+Frontend	React + Vite
+Backend API	Node.js + Express
+Worker	Node.js
+Queue	Redis + BullMQ
+Database	PostgreSQL
+AI Model	Phi-3 Mini
+LLM Runtime	Ollama
+Auth	API Key
+Infra	Docker
 
-  * submitted
-  * processing
-  * triaged
-  * failed
-* Background AI summarization
-* Automatic retries
-* Graceful failure handling
-* Real‑time UI updates
+Nothing exotic. All proven.
 
----
+How The System Actually Works
+User submits incident
+ → Backend validates
+ → Backend stores in DB
+ → Backend enqueues job
+ → Worker picks job
+ → Worker calls Ollama
+ → Worker updates DB
+ → Frontend polls and shows result
 
-## 🗂 Folder Structure
 
-```
+If the worker dies, the incident is still stored.
+If Ollama dies, the incident still exists.
+The system never blocks on AI.
+
+Incident Lifecycle
+
+submitted → stored and waiting
+
+processing → worker picked it up
+
+triaged → AI summary completed
+
+failed → AI step failed
+
+Statuses live in the database, not memory.
+
+Authentication
+
+Every request requires:
+
+X-API-KEY: secret123
+
+
+Simple, intentional, and sufficient for internal tooling.
+
+Folder Structure
 ai-incident-system/
 ├── backend/
 │   └── src/
@@ -119,300 +165,152 @@ ai-incident-system/
 │       └── main.jsx
 │
 └── docker-compose.yml
-```
 
----
 
-## 🔁 Data Flow (Critical)
+Backend, worker, and frontend are separate services.
+No monolith pretending to be microservices.
 
-```
-User Submit
- → Backend validates
- → Backend inserts into DB
- → Backend enqueues job
- → Worker consumes job
- → Worker calls Ollama
- → Worker updates DB
- → Frontend polls and displays
-```
-
----
-
-## 🔐 Authentication
-
-Every request must include:
-
-```
-X-API-KEY: secret123
-```
-
-Prevents unauthorized access.
-
----
-
-## 🛠 Prerequisites
-
-* Node.js 18+
-* Docker
-* Docker Compose
-* Git
-* Linux / macOS / WSL recommended
-
----
-
-## 🐳 Start Infrastructure
-
-```
+Running The System
+Start infrastructure
 docker compose up -d
-```
 
-Starts:
 
-* PostgreSQL
-* Redis
+Starts PostgreSQL and Redis.
 
----
+Install dependencies
 
-## 📥 Install Dependencies
+Backend:
 
-### Backend
-
-```
 cd backend
 npm install
-```
 
-### Worker
 
-```
+Worker:
+
 cd worker
 npm install
-```
 
-### Frontend
 
-```
+Frontend:
+
 cd frontend
 npm install
-```
 
----
+Run services (separate terminals)
 
-## ▶️ Run Services
+Backend:
 
-Open **separate terminals**.
-
-### Backend
-
-```
-cd backend
 npm run dev
-```
 
-### Worker
 
-```
-cd worker
+Worker:
+
 npm run dev
-```
 
-### Frontend
 
-```
-cd frontend
+Frontend:
+
 npm run dev
-```
 
-Frontend URL:
 
-```
+Open:
+
 http://localhost:5173
-```
 
----
+Ollama Setup
 
-## 🧠 Install Ollama
+Install:
 
-```
 curl -fsSL https://ollama.com/install.sh | sh
-```
+
 
 Pull model:
 
-```
 ollama pull phi3:mini
-```
 
-Run Ollama:
 
-```
+Run server:
+
 ollama serve
-```
 
----
 
-## ✅ Verify Ollama
+Test:
 
-```
 ollama run phi3:mini "hello"
-```
 
-API test:
-
-```
-curl http://localhost:11434/api/generate \
-  -d '{
-    "model": "phi3:mini",
-    "prompt": "hello",
-    "stream": false
-  }'
-```
-
----
-
-## 🧪 Submit Test Incident
-
-```
+Submitting A Test Incident
 curl -X POST http://localhost:4000/incidents \
   -H "Content-Type: application/json" \
   -H "x-api-key: secret123" \
   -d '{"title":"Disk Full","description":"Production disk at 100%"}'
-```
 
-Then visit UI.
 
----
+Watch status change in UI.
 
-## 📊 Incident Status Meanings
+Fault Tolerance Philosophy
 
-| Status     | Meaning                    |
-| ---------- | -------------------------- |
-| submitted  | Stored, waiting for worker |
-| processing | Worker picked job          |
-| triaged    | AI summary completed       |
-| failed     | AI call failed             |
+If Ollama is down:
 
----
+Backend still accepts incidents
 
-## ⚙ Fault Tolerance
+DB still stores them
 
-If Ollama is offline:
+Worker marks status as failed
 
-* Incidents still stored
-* Worker marks status = failed
-* System remains usable
+System continues running
 
-AI is an optional enrichment, not a hard dependency.
+AI is an enhancement layer, not a single point of failure.
 
----
+This is intentional.
 
-## 🌐 Remote Access (Tunneling)
+Engineering Principles Applied
 
-To allow a reviewer to access your system remotely, use tunneling.
+Separation of concerns
 
-### Option A — Ngrok
+Single source of truth
 
-Install:
+Async everywhere it matters
 
-```
-sudo snap install ngrok
-```
+Fail soft, not hard
 
-Authenticate:
+Minimal coupling
 
-```
-ngrok config add-authtoken <YOUR_TOKEN>
-```
+Boring but correct
 
-Expose frontend:
+Boring systems scale. Fancy ones break.
 
-```
-ngrok http 5173
-```
+Possible Extensions
 
-Expose backend:
+Structured JSON output from model
 
-```
-ngrok http 4000
-```
+Severity & category classification
 
-Share the generated URLs.
+WebSockets instead of polling
 
----
+Auth roles
 
-### Option B — Cloudflared (Recommended)
+Metrics dashboard
 
-Install:
+Hot-swappable models
 
-```
-sudo apt install cloudflared
-```
+None of these require redesigning the system.
 
-Expose frontend:
+Final Thoughts
 
-```
-cloudflared tunnel --url http://localhost:5173
-```
+This project mirrors how internal tooling is actually built inside production environments.
 
-Expose backend:
+It shows understanding of:
 
-```
-cloudflared tunnel --url http://localhost:4000
-```
+Backend architecture
 
-No account required.
+Data flow
 
----
+Failure modes
 
-## 🧭 What Was Built (Step‑by‑Step)
+And where AI realistically fits
 
-1. Designed architecture
-2. Built backend API
-3. Added PostgreSQL
-4. Added Redis queue
-5. Added worker
-6. Implemented async jobs
-7. Added status lifecycle
-8. Added validation
-9. Added authentication
-10. Built frontend UI
-11. Integrated Ollama
-12. Integrated Phi‑3 Mini
-13. Prompt‑controlled output
-14. Failure handling
-15. Remote tunneling support
+Not a toy.
+Not a tutorial clone.
+A real system.
 
----
-
-## 🏗 Engineering Principles Used
-
-* Separation of concerns
-* Single source of truth
-* Asynchronous processing
-* Graceful degradation
-* Idempotent updates
-* Minimal coupling
-
----
-
-## 🔮 Possible Future Extensions
-
-* Structured JSON output
-* Severity classification
-* Category tagging
-* Role‑based auth
-* WebSockets instead of polling
-* Metrics dashboard
-* Model hot‑swap
-
----
-
-## 🏁 Final Note
-
-This project mirrors how real internal tooling is built inside production companies.
-
-It proves the author understands **systems**, not just frameworks.
-
----
-
-**Built with intent, not tutorials.**
+Built deliberately.
