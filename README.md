@@ -111,7 +111,7 @@ User submits incident
 ## Authentication
 
 X-API-KEY: secret123
-
+### change it in your system for own privacy
 
 ---
 
