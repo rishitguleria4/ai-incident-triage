@@ -196,9 +196,10 @@ http://localhost:5173
 
 
 ---
-##DOCKER SERVICES 
+## DOCKER SERVICES 
 
-###RUN COMMAND:
+### RUN COMMAND:
+
   #### docker compose up -d
 
 
