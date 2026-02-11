@@ -196,6 +196,11 @@ http://localhost:5173
 
 
 ---
+##DOCKER SERVICES 
+
+###RUN COMMAND:
+  #### docker compose up -d
+
 
 ## Ollama Setup
 
